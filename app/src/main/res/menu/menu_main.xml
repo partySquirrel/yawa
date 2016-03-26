@@ -12,5 +12,4 @@
         android:orderInCategory="101"
         android:title="@string/action_map"
         app:showAsAction="never" />
-
 </menu>
