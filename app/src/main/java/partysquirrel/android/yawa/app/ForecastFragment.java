@@ -36,6 +36,36 @@ import java.util.ArrayList;
  * A placeholder fragment containing a simple view.
  */
 public class ForecastFragment extends Fragment {
+
+    private enum Units {
+        METRIC,
+        IMPERIAL;
+
+        private double getFahrenheit(double celsius) {
+            return (celsius * 9 / 5) + 32;
+        }
+
+        public String getDegreeSymbol() {
+            switch (this) {
+                case METRIC:
+                    return "\u00b0C";
+                case IMPERIAL:
+                    return "\u00b0F";
+                default:
+                    return "";
+            }
+        }
+
+        public double getDegreesFrom(double degrees) {
+            switch (this) {
+                case IMPERIAL:
+                    return getFahrenheit(degrees);
+                default:
+                    return degrees;
+            }
+        }
+    }
+
     ArrayAdapter<String> forecastAdapter;
 
     public ForecastFragment() {
@@ -74,7 +104,12 @@ public class ForecastFragment extends Fragment {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String location = prefs.getString(getString(R.string.pref_location_key),
                 getString(R.string.pref_location_default));
-        new FetchWeatherTask().execute(location);
+
+        String units = prefs.getString(
+                getString(R.string.pref_units_key),
+                getString(R.string.pref_units_default));
+
+        new FetchWeatherTask().execute(location, units);
     }
 
 
@@ -124,9 +159,11 @@ public class ForecastFragment extends Fragment {
         @Override
         protected String[] doInBackground(String... params) {
 
-            if (params.length == 0) {
+            if (params.length < 2) {
                 return null;
             }
+            String location = params[0];
+            String unit = params[1];
 
 
             // These two need to be declared outside the try/catch
@@ -144,7 +181,7 @@ public class ForecastFragment extends Fragment {
                 String base = "http://api.openweathermap.org/data/2.5/forecast/daily?";
 
                 Uri builtUri = Uri.parse(base).buildUpon()
-                        .appendQueryParameter("q", params[0] + ",fi")
+                        .appendQueryParameter("q", location + ",fi")
                         .appendQueryParameter("mode", "json")
                         .appendQueryParameter("units", "metric")
                         .appendQueryParameter("cnt", Integer.toString(7))
@@ -204,7 +241,7 @@ public class ForecastFragment extends Fragment {
 
             String[] array = null;
             try {
-                array = getWeatherDataFromJson(forecastJsonStr, 7);
+                array = getWeatherDataFromJson(forecastJsonStr, 7, unit);
 
             } catch (JSONException e) {
                 Log.e(LOG_TAG, "Error parsing JSON", e);
@@ -225,12 +262,21 @@ public class ForecastFragment extends Fragment {
         /**
          * Prepare the weather high/lows for presentation.
          */
-        private String formatHighLows(double high, double low) {
-            // For presentation, assume the user doesn't care about tenths of a degree.
-            long roundedHigh = Math.round(high);
-            long roundedLow = Math.round(low);
+        private String formatHighLows(double high, double low, String unit) {
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
+            Units units = Units.METRIC;
+            if (getString(R.string.pref_units_imperial).equalsIgnoreCase(unit)) {
+                units = Units.IMPERIAL;
+            }
+
+            String degrees = units.getDegreeSymbol();
+
+            long roundedHigh = Math.round(units.getDegreesFrom(high));
+            long roundedLow = Math.round(units.getDegreesFrom(low));
+
+            // For presentation, assume the user doesn't care about tenths of a degree.
+
+            String highLowStr = roundedHigh + degrees + "/" + roundedLow + degrees;
             return highLowStr;
         }
 
@@ -241,7 +287,7 @@ public class ForecastFragment extends Fragment {
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
          */
-        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
+        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays, String unit)
                 throws JSONException {
 
             // These are the names of the JSON objects that need to be extracted.
@@ -300,7 +346,7 @@ public class ForecastFragment extends Fragment {
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
 
-                highAndLow = formatHighLows(high, low);
+                highAndLow = formatHighLows(high, low, unit);
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
 
