@@ -185,7 +185,7 @@ public class ForecastFragment extends Fragment {
                         .appendQueryParameter("mode", "json")
                         .appendQueryParameter("units", "metric")
                         .appendQueryParameter("cnt", Integer.toString(7))
-                        .appendQueryParameter("appid", "")
+                        .appendQueryParameter("appid", BuildConfig.OPEN_WEATHER_MAP_API_KEY)
                         .build();
 
                 //URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=00500,fi&units=metric&cnt=7&appid=");

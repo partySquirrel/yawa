@@ -6,7 +6,6 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:layout="@layout/activity_main"
     tools:context="partysquirrel.android.yawa.app.DetailFragment">
 
     <TextView
@@ -15,4 +14,3 @@
         android:id="@+id/detail_text" />
 
 </RelativeLayout>
-
