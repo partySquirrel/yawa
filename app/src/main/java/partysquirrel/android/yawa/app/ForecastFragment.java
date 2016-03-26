@@ -31,8 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -50,6 +48,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
     }
@@ -59,14 +63,18 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.action_refresh) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = prefs.getString(getString(R.string.pref_location_key),
-                    getString(R.string.pref_location_default));
-            new FetchWeatherTask().execute(location);
+            updateWeather();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        new FetchWeatherTask().execute(location);
     }
 
 
@@ -75,34 +83,11 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        final List<String> forecasts = new ArrayList<>();
-        Random random = new Random();
-
-        for (int i = 0; i < 50; i++) {
-            String cast = "Day " + (i + 1) + " - ";
-
-            if (i % 2 == 0) {
-                cast += " sunny - ";
-            } else if (i % 3 == 0) {
-                cast += " rainy - ";
-            } else if (i % 5 == 0) {
-                cast += " cloudy - ";
-            } else if (i % 7 == 0) {
-                cast += " windy - ";
-            } else {
-                cast += " snowy - ";
-            }
-
-            cast += random.nextInt(30) + "/" + random.nextInt(20);
-
-            forecasts.add(cast);
-        }
-
         forecastAdapter = new ArrayAdapter<>(
                 getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
-                forecasts
+                new ArrayList<String>()
         );
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
